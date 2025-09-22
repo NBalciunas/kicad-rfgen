@@ -11,7 +11,7 @@
             "web": "https://nbalciunas.github.io/"
         }
     },
-    "license": "Apache-2.0",
+    "license": "MIT",
     "icon": "assets/icon.png",
     "resources": {
         "homepage": "https://github.com/NBalciunas"
