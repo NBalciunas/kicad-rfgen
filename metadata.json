@@ -1,0 +1,32 @@
+{
+    "name": "RFgen",
+    "description": "Generate RF footprints and antennas in KiCad.",
+    "description_full": "KiCad plugin for quickly generating customizable RF footprints and antennas.",
+    "identifier": "com.github.nbalciunas.kicad-rfgen",
+    "type": "plugin",
+    "author": {
+        "name": "Nojus Balčiūnas",
+        "contact": {
+            "web": "https://nbalciunas.github.io/"
+        }
+    },
+    "license": "Apache-2.0",
+    "resources": {
+        "homepage": "https://github.com/NBalciunas"
+    },
+    "tags": [
+        "rf",
+        "antenna",
+        "toolkit"
+    ],
+    "versions": [
+        {
+            "version": "1.0",
+            "status": "stable",
+            "kicad_version": "8.0.0",
+            "platforms": [
+                "windows"
+            ]
+        }
+    ]
+}
