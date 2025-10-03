@@ -4,9 +4,10 @@
 
 ## Features
 
-- Generate microstrip patch antennas and place them interactively on your PCB.
-- Configure antenna length, width, feed, and inset via a simple UI.
-- Options for ground plane and solder mask exposure.
+- Generate RF components.
+- Place generated footprints directly on your PCB.
+- Configure dimensions through a simple interface.
+- Use extra options for ground plane and solder mask exposure.
 
 ## Installation
 
