@@ -17,16 +17,29 @@
 
 ## Usage
 
-placeholder :^)
+![RFgen menu](docs/example-1.png)
+
+1) Select RF Component from the generate dropdown menu (**Microstrip Patch Antenna** in this example).
+2) Set the footprint name.
+3) Enter the desired dimensions for the appropriate settings.
+4) Adjust extra options (**Include ground plane** or **Remove solder mask** in this example).
+5) Click **Generate** to create and place the footprint.
 
 ## Example
 
-placeholder :^)
+The following example shows a generated **Microstrip Patch Antenna** footprint using the specified parameters from the **Usage** section.
+
+![Microstrip Patch Antenna basic footprint in 2D view](docs/example-2.png)
+![Microstrip Patch Antenna basic footprint in 3D view](docs/example-3.png)
+
+This illustrates how the footprint is created in both 2D and 3D views, ready for placement on the PCB.
 
 ## Future Goals
 
-- [ ] Wilkinson power divider
-- [ ] More antennas
+- Add support for more antenna types.
+- Implement memory to recall previous generation settings.
+- Provide configurable ground clearance options.
+- Explore adding extra RF design tools.
 
 ## License
 
