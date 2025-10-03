@@ -2,6 +2,7 @@ import pcbnew
 import wx
 import os
 from .microstrip_patch_gen import generate_microstrip_patch
+from .wilkinson_gen import generate_wilkinson
 
 
 class RFgen(pcbnew.ActionPlugin):
@@ -19,7 +20,7 @@ class RFgen(pcbnew.ActionPlugin):
 class RFgenUI(wx.Frame):
     def __init__(self, frame):
         style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX)
-        super().__init__(parent=None, title="RFgen", size=(330, 800), style=style)
+        super().__init__(parent=None, title="RFgen", size=(330, 760), style=style)
 
         self._frame = frame
 
@@ -57,20 +58,29 @@ class RFgenUI(wx.Frame):
 
     def update_fields(self, choice):
         self.dynamic_box.Clear(True)
-        self.antenna_img = None
+
+        self.img = None
         self.footprint_name_input = None
+        self.ground_check_input = None
+        self.mask_check_input = None
+
         self.patch_length_input = None
         self.patch_width_input = None
         self.feed_length_input = None
         self.feed_width_input = None
         self.inset_gap_input = None
         self.inset_distance_input = None
-        self.ground_check = None
-        self.mask_check = None
+
+        self.input_length_input = None
+        self.input_width_input = None
+        self.output_length_input = None
+        self.output_width_input = None
+        self.arc_radius_input = None
+        self.arc_width_input = None
 
         match choice:
             case "Microstrip Patch Antenna":
-                self.antenna_img = add_image(self.panel, self.dynamic_box, "assets/microstrip-patch-antenna.png", size=(270, 270))
+                self.img = add_image(self.panel, self.dynamic_box, "assets/microstrip-patch-antenna.png", size=(270, 270))
                 self.footprint_name_input = add_field(self.panel, self.dynamic_box, "footprint name", "PATCH_ANTENNA", width=160)
                 self.patch_length_input = add_field(self.panel, self.dynamic_box, "Patch Length (Lp)", "11.6", width=80, unit="mm")
                 self.patch_width_input = add_field(self.panel, self.dynamic_box, "Patch Width (Wp)", "16.3", width=80, unit="mm")
@@ -78,10 +88,19 @@ class RFgenUI(wx.Frame):
                 self.feed_width_input = add_field(self.panel, self.dynamic_box, "Feed Width (Wf)", "2.8", width=80, unit="mm")
                 self.inset_gap_input = add_field(self.panel, self.dynamic_box, "Inset Gap (X0)", "0.5", width=80, unit="mm")
                 self.inset_distance_input = add_field(self.panel, self.dynamic_box, "Inset Distance (Y0)", "3.9", width=80, unit="mm")
-                self.ground_check = add_checkbox(self.panel, self.dynamic_box, "Include ground plane", default=True)
-                self.mask_check = add_checkbox(self.panel, self.dynamic_box, "Remove solder mask", default=True)
+                self.ground_check_input = add_checkbox(self.panel, self.dynamic_box, "Include ground plane", default=True)
+                self.mask_check_input = add_checkbox(self.panel, self.dynamic_box, "Remove solder mask", default=True)
             case "Wilkinson Power Divider":
+                self.img = add_image(self.panel, self.dynamic_box, "assets/wilkinson-power-divider.png", size=(270, 270))
                 self.footprint_name_input = add_field(self.panel, self.dynamic_box, "footprint name", "WILKINSON", width=160)
+                self.input_length_input = add_field(self.panel, self.dynamic_box, "Input Length (L0)", "1.9", width=80, unit="mm")
+                self.input_width_input = add_field(self.panel, self.dynamic_box, "Input Width (W0)", "2.8", width=80, unit="mm")
+                self.output_length_input = add_field(self.panel, self.dynamic_box, "Output Length (L1)", "3.4", width=80, unit="mm")
+                self.output_width_input = add_field(self.panel, self.dynamic_box, "Output Width (W1)", "1.7", width=80, unit="mm")
+                self.arc_radius_input = add_field(self.panel, self.dynamic_box, "Arc Radius (R)", "2.2", width=80, unit="mm")
+                self.arc_width_input = add_field(self.panel, self.dynamic_box, "Arc Width (W2)", "1.7", width=80, unit="mm")
+                self.ground_check_input = add_checkbox(self.panel, self.dynamic_box, "Include ground plane", default=True)
+                self.mask_check_input = add_checkbox(self.panel, self.dynamic_box, "Expose pads for isolation resistor", default=True)
             case _:
                 wx.MessageBox("Something went wrong...", "Error")
 
@@ -99,12 +118,22 @@ class RFgenUI(wx.Frame):
                 feed_width = float(self.feed_width_input.GetValue())
                 inset_gap = float(self.inset_gap_input.GetValue())
                 inset_distance_input = float(self.inset_distance_input.GetValue())
-                ground_check = bool(self.ground_check.GetValue())
-                mask_check = bool(self.mask_check.GetValue())
+                ground_check = bool(self.ground_check_input.GetValue())
+                mask_check = bool(self.mask_check_input.GetValue())
                 footprint = generate_microstrip_patch(footprint_name, patch_length=patch_length, patch_width=patch_width, feed_length=feed_length, feed_width=feed_width, inset_gap=inset_gap, inset_distance_input=inset_distance_input, ground_check=ground_check, mask_check=mask_check)
                 self.spawn_footprint(footprint)
             case "Wilkinson Power Divider":
-                wx.MessageBox(f"name: {footprint_name}", "Confirmation")
+                self.Destroy()
+                input_length = float(self.input_length_input.GetValue())
+                input_width = float(self.input_width_input.GetValue())
+                output_length = float(self.output_length_input.GetValue())
+                output_width = float(self.output_width_input.GetValue())
+                arc_radius = float(self.arc_radius_input.GetValue())
+                arc_width = float(self.arc_width_input.GetValue())
+                ground_check = bool(self.ground_check_input.GetValue())
+                mask_check = bool(self.mask_check_input.GetValue())
+                footprint = generate_wilkinson(footprint_name, input_length=input_length, input_width=input_width, output_length=output_length, output_width=output_width, arc_radius=arc_radius, arc_width=arc_width, ground_check=ground_check, mask_check=mask_check)
+                self.spawn_footprint(footprint)
             case _:
                 wx.MessageBox("Something went wrong...", "Error")
 
