@@ -39,7 +39,6 @@ This illustrates how the footprint is created in both 2D and 3D views, ready for
 
 - Add support for more antenna types.
 - Implement memory to recall previous generation settings.
-- Provide configurable ground clearance options.
 - Explore adding extra RF design tools.
 
 ## License

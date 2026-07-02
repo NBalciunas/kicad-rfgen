@@ -1,8 +1,9 @@
 import pcbnew
 import wx
 import os
+from .microstrip_patch_inset_gen import generate_microstrip_inset_patch
+from .microstrip_patch_coaxial_gen import generate_microstrip_coaxial_patch
 from .microstrip_patch_gen_legacy import generate_microstrip_patch_legacy
-from .microstrip_patch_gen import generate_microstrip_patch
 from .wilkinson_gen import generate_wilkinson
 
 
@@ -21,7 +22,7 @@ class RFgen(pcbnew.ActionPlugin):
 class RFgenUI(wx.Frame):
     def __init__(self, frame):
         style = wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX)
-        super().__init__(parent=None, title="RFgen", size=(330, 760), style=style)
+        super().__init__(parent=None, title="RFgen", size=(360, 830), style=style)
 
         self._frame = frame
 
@@ -34,10 +35,10 @@ class RFgenUI(wx.Frame):
 
         # Choice
         hbox = wx.BoxSizer(wx.HORIZONTAL)
-        hbox.Add(wx.StaticText(self.panel, label="generate", size=(70, -1)), flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=10)
-        self.gen_choice = wx.Choice(self.panel, choices=["Microstrip Patch Antenna", "Microstrip Patch Antenna (Legacy)", "Wilkinson Power Divider"], size=(210, -1))
+        hbox.Add(wx.StaticText(self.panel, label="generate"), flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=10)
+        self.gen_choice = wx.Choice(self.panel, choices=["Microstrip Patch Antenna (Inset Feed)", "Microstrip Patch Antenna (Coaxial Feed)", "Microstrip Patch Antenna (Legacy)", "Wilkinson Power Divider"])
         self.gen_choice.SetSelection(0)
-        hbox.Add(self.gen_choice, flag=wx.ALL | wx.CENTER, border=10)
+        hbox.Add(self.gen_choice, proportion=1, flag=wx.ALL | wx.ALIGN_CENTER_VERTICAL, border=10)
         vbox.Add(hbox, flag=wx.EXPAND)
         self.gen_choice.Bind(wx.EVT_CHOICE, self.on_choice)
 
@@ -51,7 +52,7 @@ class RFgenUI(wx.Frame):
 
         self.panel.SetSizer(vbox)
 
-        self.update_fields("Microstrip Patch Antenna")
+        self.update_fields("Microstrip Patch Antenna (Inset Feed)")
 
     def on_choice(self, event):
         choice = self.gen_choice.GetStringSelection()
@@ -69,10 +70,17 @@ class RFgenUI(wx.Frame):
         self.patch_width_input = None
         self.ground_length_input = None
         self.ground_width_input = None
+
         self.feed_length_input = None  # Legacy
         self.feed_width_input = None
         self.inset_gap_input = None
         self.inset_distance_input = None
+
+        self.feed_offset_x_input = None
+        self.feed_offset_y_input = None
+        self.pad_radius_input = None
+        self.hole_radius_input = None
+        self.clearance_radius_input = None
 
         self.input_length_input = None
         self.input_width_input = None
@@ -82,7 +90,7 @@ class RFgenUI(wx.Frame):
         self.arc_width_input = None
 
         match choice:
-            case "Microstrip Patch Antenna":
+            case "Microstrip Patch Antenna (Inset Feed)":
                 self.img = add_image(self.panel, self.dynamic_box, "assets/microstrip-patch-antenna.png", size=(270, 270))
                 self.footprint_name_input = add_field(self.panel, self.dynamic_box, "footprint name", "PATCH_ANTENNA", width=160)
                 self.patch_length_input = add_field(self.panel, self.dynamic_box, "Patch Length (Lp)", "11.6", width=80, unit="mm")
@@ -92,6 +100,20 @@ class RFgenUI(wx.Frame):
                 self.feed_width_input = add_field(self.panel, self.dynamic_box, "Feed Width (Wf)", "2.8", width=80, unit="mm")
                 self.inset_gap_input = add_field(self.panel, self.dynamic_box, "Inset Gap (X0)", "0.5", width=80, unit="mm")
                 self.inset_distance_input = add_field(self.panel, self.dynamic_box, "Inset Distance (Y0)", "3.9", width=80, unit="mm")
+                self.ground_check_input = add_checkbox(self.panel, self.dynamic_box, "Include ground plane", default=True)
+                self.mask_check_input = add_checkbox(self.panel, self.dynamic_box, "Remove solder mask", default=True)
+            case "Microstrip Patch Antenna (Coaxial Feed)":
+                self.img = add_image(self.panel, self.dynamic_box, "assets/microstrip-patch-antenna.png", size=(270, 270))
+                self.footprint_name_input = add_field(self.panel, self.dynamic_box, "footprint name", "PATCH_ANTENNA", width=160)
+                self.patch_length_input = add_field(self.panel, self.dynamic_box, "Patch Length (Lp)", "11.6", width=80, unit="mm")
+                self.patch_width_input = add_field(self.panel, self.dynamic_box, "Patch Width (Wp)", "16.3", width=80, unit="mm")
+                self.ground_length_input = add_field(self.panel, self.dynamic_box, "Ground Length (Lg)", "21.2", width=80, unit="mm")
+                self.ground_width_input = add_field(self.panel, self.dynamic_box, "Ground Width (Wg)", "25.9", width=80, unit="mm")
+                self.feed_offset_x_input = add_field(self.panel, self.dynamic_box, "Feed Offset X (Xf)", "0", width=80, unit="mm")
+                self.feed_offset_y_input = add_field(self.panel, self.dynamic_box, "Feed Offset Y (Yf)", "2.9", width=80, unit="mm")
+                self.pad_radius_input = add_field(self.panel, self.dynamic_box, "Pad Radius (Rp)", "1.4", width=80, unit="mm")
+                self.hole_radius_input = add_field(self.panel, self.dynamic_box, "Hole Radius (Rt)", "0.65", width=80, unit="mm")
+                self.clearance_radius_input = add_field(self.panel, self.dynamic_box, "Clearance Radius (Rc)", "2.5", width=80, unit="mm")
                 self.ground_check_input = add_checkbox(self.panel, self.dynamic_box, "Include ground plane", default=True)
                 self.mask_check_input = add_checkbox(self.panel, self.dynamic_box, "Remove solder mask", default=True)
             case "Microstrip Patch Antenna (Legacy)":
@@ -125,7 +147,7 @@ class RFgenUI(wx.Frame):
         footprint_name = self.footprint_name_input.GetValue()
         gen_choice = self.gen_choice.GetStringSelection()
         match gen_choice:
-            case "Microstrip Patch Antenna":
+            case "Microstrip Patch Antenna (Inset Feed)":
                 self.Destroy()
                 patch_length = float(self.patch_length_input.GetValue())
                 patch_width = float(self.patch_width_input.GetValue())
@@ -136,7 +158,22 @@ class RFgenUI(wx.Frame):
                 inset_distance = float(self.inset_distance_input.GetValue())
                 ground_check = bool(self.ground_check_input.GetValue())
                 mask_check = bool(self.mask_check_input.GetValue())
-                footprint = generate_microstrip_patch(footprint_name, patch_length=patch_length, patch_width=patch_width, ground_length=ground_length, ground_width=ground_width, feed_width=feed_width, inset_gap=inset_gap, inset_distance=inset_distance, ground_check=ground_check, mask_check=mask_check)
+                footprint = generate_microstrip_inset_patch(footprint_name, patch_length=patch_length, patch_width=patch_width, ground_length=ground_length, ground_width=ground_width, feed_width=feed_width, inset_gap=inset_gap, inset_distance=inset_distance, ground_check=ground_check, mask_check=mask_check)
+                self.spawn_footprint(footprint)
+            case "Microstrip Patch Antenna (Coaxial Feed)":
+                self.Destroy()
+                patch_length = float(self.patch_length_input.GetValue())
+                patch_width = float(self.patch_width_input.GetValue())
+                ground_length = float(self.ground_length_input.GetValue())
+                ground_width = float(self.ground_width_input.GetValue())
+                feed_offset_x = float(self.feed_offset_x_input.GetValue())
+                feed_offset_y = float(self.feed_offset_y_input.GetValue())
+                pad_radius = float(self.pad_radius_input.GetValue())
+                hole_radius = float(self.hole_radius_input.GetValue())
+                clearance_radius = float(self.clearance_radius_input.GetValue())
+                ground_check = bool(self.ground_check_input.GetValue())
+                mask_check = bool(self.mask_check_input.GetValue())
+                footprint = generate_microstrip_coaxial_patch(footprint_name, patch_length=patch_length, patch_width=patch_width, ground_length=ground_length, ground_width=ground_width, feed_offset_x=feed_offset_x, feed_offset_y=feed_offset_y, pad_radius=pad_radius, hole_radius=hole_radius, clearance_radius=clearance_radius, ground_check=ground_check, mask_check=mask_check)
                 self.spawn_footprint(footprint)
             case "Microstrip Patch Antenna (Legacy)":
                 self.Destroy()

@@ -1,4 +1,5 @@
 import pcbnew
+import math
 
 
 def points_to_sexpr(points, layer):
@@ -6,27 +7,28 @@ def points_to_sexpr(points, layer):
     return f"(fp_poly (pts {pts}) (layer {layer}) (width 0) (fill solid))\n"
 
 
-def generate_microstrip_patch(name="PATCH_ANTENNA", patch_length=15, patch_width=20, ground_length=24.6, ground_width=29.6, feed_width=3, inset_gap=1, inset_distance=5, ground_check=True, mask_check=True):
+def generate_microstrip_coaxial_patch(name="PATCH_ANTENNA", patch_length=15, patch_width=20, ground_length=24.6, ground_width=29.6, feed_offset_x=0, feed_offset_y=2.9, pad_radius=1.4, hole_radius=0.65, clearance_radius=2.5, ground_check=True, mask_check=True):
 
     points_f = [
         pcbnew.VECTOR2I(-pcbnew.FromMM(patch_width / 2), -pcbnew.FromMM(patch_length / 2)),
         pcbnew.VECTOR2I(pcbnew.FromMM(patch_width / 2), -pcbnew.FromMM(patch_length / 2)),
         pcbnew.VECTOR2I(pcbnew.FromMM(patch_width / 2), pcbnew.FromMM(patch_length / 2)),
-        pcbnew.VECTOR2I(pcbnew.FromMM(feed_width / 2 + inset_gap), pcbnew.FromMM(patch_length / 2)),
-        pcbnew.VECTOR2I(pcbnew.FromMM(feed_width / 2 + inset_gap), pcbnew.FromMM(patch_length / 2 - inset_distance)),
-        pcbnew.VECTOR2I(pcbnew.FromMM(feed_width / 2), pcbnew.FromMM(patch_length / 2 - inset_distance)),
-        pcbnew.VECTOR2I(pcbnew.FromMM(feed_width / 2), pcbnew.FromMM(ground_length / 2)),
-        pcbnew.VECTOR2I(-pcbnew.FromMM(feed_width / 2), pcbnew.FromMM(ground_length / 2)),
-        pcbnew.VECTOR2I(-pcbnew.FromMM(feed_width / 2), pcbnew.FromMM(patch_length / 2 - inset_distance)),
-        pcbnew.VECTOR2I(-pcbnew.FromMM(feed_width / 2 + inset_gap), pcbnew.FromMM(patch_length / 2 - inset_distance)),
-        pcbnew.VECTOR2I(-pcbnew.FromMM(feed_width / 2 + inset_gap), pcbnew.FromMM(patch_length / 2)),
         pcbnew.VECTOR2I(-pcbnew.FromMM(patch_width / 2), pcbnew.FromMM(patch_length / 2))
+    ]
+
+    circle = [
+        pcbnew.VECTOR2I(pcbnew.FromMM(feed_offset_x + clearance_radius * math.sin(2 * math.pi * i / 36)),
+                        pcbnew.FromMM(feed_offset_y + clearance_radius * math.cos(2 * math.pi * i / 36)))
+        for i in range(37)
     ]
 
     points_b = [
         pcbnew.VECTOR2I(-pcbnew.FromMM(ground_width / 2), -pcbnew.FromMM(ground_length / 2)),
         pcbnew.VECTOR2I(pcbnew.FromMM(ground_width / 2), -pcbnew.FromMM(ground_length / 2)),
         pcbnew.VECTOR2I(pcbnew.FromMM(ground_width / 2), pcbnew.FromMM(ground_length / 2)),
+        pcbnew.VECTOR2I(pcbnew.FromMM(feed_offset_x), pcbnew.FromMM(ground_length / 2)),
+        *circle,
+        pcbnew.VECTOR2I(pcbnew.FromMM(feed_offset_x), pcbnew.FromMM(ground_length / 2)),
         pcbnew.VECTOR2I(-pcbnew.FromMM(ground_width / 2), pcbnew.FromMM(ground_length / 2))
     ]
 
@@ -38,7 +40,7 @@ def generate_microstrip_patch(name="PATCH_ANTENNA", patch_length=15, patch_width
     poly_mask = poly_fm + poly_bm if ground_check else poly_fm
     poly = poly_copper + poly_mask if mask_check else poly_copper
 
-    pad = f"(pad 1 smd rect (at 0 {ground_length/2-feed_width/2}) (size {feed_width} {feed_width}) (layers F.Cu))\n"
+    pad = f"(pad 1 thru_hole circle (at {feed_offset_x} {feed_offset_y}) (size {pad_radius * 2} {pad_radius * 2}) (drill {hole_radius * 2}) (layers *.Cu *.Mask))\n"
 
     template = f"""
                 (module {name} (layer F.Cu)
