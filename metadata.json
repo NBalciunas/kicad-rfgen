@@ -14,7 +14,7 @@
     "license": "MIT",
     "icon": "assets/icon.png",
     "resources": {
-        "homepage": "https://github.com/NBalciunas"
+        "homepage": "https://github.com/NBalciunas/kicad-rfgen"
     },
     "tags": [
         "rf",
@@ -23,7 +23,7 @@
     ],
     "versions": [
         {
-            "version": "1.1.0",
+            "version": "1.2.0",
             "status": "stable",
             "kicad_version": "8.0.8",
             "platforms": [
