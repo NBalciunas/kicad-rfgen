@@ -14,7 +14,7 @@
 1) Download the [latest release ZIP file](https://github.com/NBalciunas/kicad-rfgen/releases).
 2) Open KiCad and in the main window click on "Plugin and Content Manager".
 3) Click "Install from File..." and select the downloaded ZIP file.  
-4) Restart KiCad — the plugin is now installed.
+4) Restart KiCad. The plugin is now installed.
 
 ## Usage
 
