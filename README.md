@@ -1,4 +1,4 @@
-<img align="right" width="60px" src="plugins/assets/icon.png">
+<img align="right" width="60px" src="resources/icon.png">
 
 # RFgen
 
