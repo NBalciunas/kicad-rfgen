@@ -7,7 +7,7 @@ def points_to_sexpr(points, layer):
     return f"(fp_poly (pts {pts}) (layer {layer}) (width 0) (fill solid))\n"
 
 
-def generate_microstrip_dual_coaxial_patch(name="PATCH_ANTENNA", patch_length=15, patch_width=20, ground_length=24.6, ground_width=29.6, feed_offset_x_a=0, feed_offset_y_a=2.9, feed_offset_x_b=2.9, feed_offset_y_b=0, pad_radius=1.4, hole_radius=0.65, clearance_radius=2.5, ground_check=True, mask_check=True):
+def generate_microstrip_dual_coaxial_patch(name="PATCH_ANTENNA", patch_length=28.314, patch_width=28.314, ground_length=37.914, ground_width=37.914, feed_offset_x_a=7.286, feed_offset_y_a=0, feed_offset_x_b=0, feed_offset_y_b=7.286, pad_radius=2.143, hole_radius=0.635, clearance_radius=3.5, ground_check=True, mask_check=True):
 
     points_f = [
         pcbnew.VECTOR2I(-pcbnew.FromMM(patch_width / 2), -pcbnew.FromMM(patch_length / 2)),
