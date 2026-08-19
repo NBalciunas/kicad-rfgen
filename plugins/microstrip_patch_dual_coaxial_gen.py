@@ -1,10 +1,6 @@
 import pcbnew
 import math
-
-
-def points_to_sexpr(points, layer):
-    pts = " ".join([f"(xy {p.x / 1e6:.6f} {p.y / 1e6:.6f})" for p in points])
-    return f"(fp_poly (pts {pts}) (layer {layer}) (width 0) (fill solid))\n"
+from .sexpr import points_to_sexpr, pad_to_sexpr, corner_anchor
 
 
 def generate_microstrip_dual_coaxial_patch(name="PATCH_ANTENNA", patch_length=28.314, patch_width=28.314, ground_length=37.914, ground_width=37.914, feed_offset_x_a=7.286, feed_offset_y_a=0, feed_offset_x_b=0, feed_offset_y_b=7.286, pad_radius=2.143, hole_radius=0.635, clearance_radius=3.5, ground_check=True, mask_check=True):
@@ -39,19 +35,20 @@ def generate_microstrip_dual_coaxial_patch(name="PATCH_ANTENNA", patch_length=28
         pcbnew.VECTOR2I(-pcbnew.FromMM(ground_width / 2), pcbnew.FromMM(ground_length / 2))
     ]
 
-    poly_f = points_to_sexpr(points_f, "F.Cu")
-    poly_b = points_to_sexpr(points_b, "B.Cu")
+    pad_probe_a = f"(pad 1 thru_hole circle (at {feed_offset_x_a} {feed_offset_y_a}) (size {pad_radius * 2} {pad_radius * 2}) (drill {hole_radius * 2}) (layers *.Cu *.Mask))\n"
+    pad_probe_b = f"(pad 2 thru_hole circle (at {feed_offset_x_b} {feed_offset_y_b}) (size {pad_radius * 2} {pad_radius * 2}) (drill {hole_radius * 2}) (layers *.Cu *.Mask))\n"
+    pad_f = pad_to_sexpr(1, [points_f], (feed_offset_x_a, feed_offset_y_a), (pad_radius * 2, pad_radius * 2), "F.Cu", anchor="circle")
+    pad_b = pad_to_sexpr(3, [points_b], *corner_anchor(points_b), "B.Cu")
+    pads = pad_probe_a + pad_probe_b + pad_f + (pad_b if ground_check else "")
+
     poly_fm = points_to_sexpr(points_f, "F.Mask")
     poly_bm = points_to_sexpr(points_b, "B.Mask")
-    poly_copper = poly_f + poly_b if ground_check else poly_f
     poly_mask = poly_fm + poly_bm if ground_check else poly_fm
-    poly = poly_copper + poly_mask if mask_check else poly_copper
-
-    pads = (f"(pad 1 thru_hole circle (at {feed_offset_x_a} {feed_offset_y_a}) (size {pad_radius * 2} {pad_radius * 2}) (drill {hole_radius * 2}) (layers *.Cu *.Mask))\n"
-            f"(pad 2 thru_hole circle (at {feed_offset_x_b} {feed_offset_y_b}) (size {pad_radius * 2} {pad_radius * 2}) (drill {hole_radius * 2}) (layers *.Cu *.Mask))\n")
+    poly = poly_mask if mask_check else ""
 
     template = f"""
                 (module {name} (layer F.Cu)
+                (net_tie_pad_groups "1,2")
                 (fp_text reference REF** (at 0 0) (layer F.SilkS))
                 (fp_text value {name} (at 0 -2) (layer F.Fab))
                 {poly}
