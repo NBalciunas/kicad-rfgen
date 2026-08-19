@@ -122,7 +122,7 @@ class RFgenUI(wx.Frame):
                 self.ground_check_input = add_checkbox(self.panel, self.dynamic_box, "Include ground plane", default=True)
                 self.mask_check_input = add_checkbox(self.panel, self.dynamic_box, "Remove solder mask", default=True)
             case "Microstrip Patch Antenna (Dual Coaxial Feed)":
-                self.img = add_image(self.panel, self.dynamic_box, "assets/microstrip-patch-coaxial-antenna.png", size=(270, 270))
+                self.img = add_image(self.panel, self.dynamic_box, "assets/microstrip-patch-dual-coaxial-antenna.png", size=(270, 270))
                 self.footprint_name_input = add_field(self.panel, self.dynamic_box, "footprint name", "PATCH_ANTENNA", width=160)
                 self.patch_length_input = add_field(self.panel, self.dynamic_box, "Patch Length (Lp)", "28.314", width=80, unit="mm")
                 self.patch_width_input = add_field(self.panel, self.dynamic_box, "Patch Width (Wp)", "28.314", width=80, unit="mm")
